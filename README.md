@@ -15,15 +15,18 @@ git clone [https://github.com/terencel411/astr-gpu-acceleration.git](https://git
 ## Compilation:
 The Makefile gives a more complete and safe way of compiling and installing the code.
 
-Go to the director where the miniapps code is present
+Go to the directory where the miniapps code is present
+
 cd astr/miniapps/tgv_solver_3d
 
-There cpu and the gpu acceleratedcode is present in the same directory, which can be compiled using the following cmake commands
+There cpu and the gpu accelerated code are present in the same directory, which can be compiled using the following cmake commands
 
 Compile and execute the cpu code
+
 cmake cpu
 
 Compile and execute the gpu accelerated code
+
 cmake gpu
 
 ## Acceleration Comparison
