@@ -1,12 +1,14 @@
 # ASTR code 
 Version 2.0 
 
-ASTR code is a high-order finite-difference flow solver for compressible turbulence research.
+ASTR code is a high-order finite-difference flow solver for compressible turbulence research. This project explores the usage of CUDA-Fortran to parallelise the ASTR code.
 
 # Download, Installation and Compilation
-Required dependencies: Fortran 90, MPI, HDF5
+Required dependencies: Fortran 90, NVIDIA HPC SDK, CMAKE
 
-## Download the astr code:
+The installation guide for NVIDIA HPC SDK can be found at [Installation Guide](https://docs.nvidia.com/hpc-sdk/hpc-sdk-install-guide/index.html)
+
+## Download the gpu accelerated astr code:
 
 git clone git@github.com:astr-code/astr.git
 
