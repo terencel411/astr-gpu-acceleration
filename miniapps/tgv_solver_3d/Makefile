@@ -14,6 +14,7 @@ SRC2 = tgvsolver_gpu_v3.cuf
 SRC3 = compstats.f90
 
 # all: $(EXEC1) $(EXEC2) $(EXEC3)
+runs cpu & gpu, then compares
 all: cpu gpu compare
 
 # Compile
