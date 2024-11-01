@@ -8,7 +8,7 @@ Required dependencies: Fortran 90, NVIDIA HPC SDK, CMAKE
 
 The installation guide for NVIDIA HPC SDK can be found at [Installation Guide](https://docs.nvidia.com/hpc-sdk/hpc-sdk-install-guide/index.html)
 
-## Download the astr code:
+## Download the gpu accelerated astr code:
 
 git clone git@github.com:astr-code/astr.git
 
