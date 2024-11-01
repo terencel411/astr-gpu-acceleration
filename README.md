@@ -10,7 +10,7 @@ The installation guide for NVIDIA HPC SDK can be found at [Installation Guide](h
 
 ## Download the gpu accelerated astr code:
 
-git clone [git@github.com:astr-code/astr.git](https://github.com/terencel411/astr-gpu-acceleration.git)
+git clone [https://github.com/terencel411/astr-gpu-acceleration.git](https://github.com/terencel411/astr-gpu-acceleration.git)
 
 ## Compilation:
 The Makefile gives a more complete and safe way of compiling and installing the code.
