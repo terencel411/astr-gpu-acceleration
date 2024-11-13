@@ -2,8 +2,9 @@ module comvardef
     !
     implicit none
     !
-    ! integer :: im=128,jm=128,km=128,hm=5,numq=5
-    integer :: im=64,jm=64,km=64,hm=5,numq=5
+    integer :: im=128,jm=128,km=128,hm=5,numq=5
+    ! integer :: im=64,jm=64,km=64,hm=5,numq=5
+    ! integer :: im=16,jm=16,km=16,hm=5,numq=5
   
     real(8),parameter :: pi=4.d0*atan(1.0_8),                            &
                          num1d35 =1.d0/35.d0,  num1d3  =1.d0/3.d0,       &
@@ -20,15 +21,17 @@ module comvardef
                          num19d18=19.d0/18.d0, num5d9  =5.d0/9.d0,       &
                          num9d36 =9.d0/36.d0
     !
+    logical, parameter :: performval1 = .true.
+    ! logical, parameter :: performval1 = .false.
+    ! logical, parameter :: performval2 = .true.
+    logical, parameter :: performval2 = .false.
+    !
     integer :: nstep
     real(8) :: time,deltat
     !
     real(8) :: gamma,mach,reynolds,prandtl,ref_t
     real(8) :: const1,const2,const3,const4,const5,const6,const7
     real(8) :: dx,dy,dz
-    !
-    logical :: performval = .true.
-    ! logical :: performval = .false.
     !
     real :: ctime(24)
     !
@@ -51,7 +54,7 @@ module comvardef
       allocate(dvel(0:im,0:jm,0:km,1:3,1:3))
       allocate(dtmp(0:im,0:jm,0:km,1:3))
       !
-      print*,' ** common array allocated'
+      ! print*,' ** common array allocated'
       !
     end subroutine alloarray
     !
@@ -290,7 +293,7 @@ module comvardef
       !
       ctime=0.0
       !
-      print*,' ** data initilised'
+      ! print*,' ** data initilised'
       !
     end subroutine tgvinit
     !
@@ -365,11 +368,11 @@ module comvardef
     !
     subroutine bchomo(comptime)
       !
-      use comvardef, only: im,jm,km,hm,nstep,rho,prs,tmp,vel,q
+      use comvardef, only: im,jm,km,hm,nstep,rho,prs,tmp,vel,q,ctime,performval2
       use dataoper,  only: var2q
       !
       real,intent(inout),optional :: comptime
-      real :: tstart,tfinish
+      real :: tstart,tfinish,tstart1,tfinish1
       !
       integer :: i,j,k
       !
@@ -407,12 +410,6 @@ module comvardef
       enddo
       ! end of applying b.c. along i direction
       !
-      write(94, *) nstep, "rho", rho(-hm:-hm+1,20,km+hm)
-      write(94, *) nstep, "vel", vel(hm:km+hm-4,0,10,2)
-      write(94, *) nstep, "prs", prs(-hm+1:-hm+2,10,20)
-      write(94, *) nstep, "tmp", tmp(hm+1:km+hm-3,-hm:-hm+1,3)
-      write(94, *) nstep, "q", q(-hm+2:-hm+3,10,40,:)
-      !
       ! b.c. at the j direction
       do k=0,km
       do i=0,im
@@ -441,12 +438,6 @@ module comvardef
         !
       enddo
       enddo
-      ! 
-      write(94, *) nstep, "rho", rho(20,-hm:-hm+1,km+hm)
-      write(94, *) nstep, "vel", vel(10,hm:km+hm-4,0,2)
-      write(94, *) nstep, "prs", prs(30,-hm+1:-hm+2,20)
-      write(94, *) nstep, "tmp", tmp(10,hm+1:km+hm-3,-hm:-hm+1)
-      write(94, *) nstep, "q", q(20,-hm+2:-hm+3,25,:)
       ! end of applying b.c. along j direction
       !
       ! b.c. at the k direction
@@ -477,12 +468,6 @@ module comvardef
         !
       enddo
       enddo
-      ! 
-      write(94, *) nstep, "rho", rho(30,km+hm,-hm:-hm+1)
-      write(94, *) nstep, "vel", vel(20,10,hm:km+hm-4,2)
-      write(94, *) nstep, "prs", prs(30,20,-hm+1:-hm+2)
-      write(94, *) nstep, "tmp", tmp(10,30,hm+1:km+hm-3)
-      write(94, *) nstep, "q", q(20,20,-hm+2:-hm+3,:)
       ! end of applying b.c. along k direction
       !
       if(present(comptime)) then
@@ -490,6 +475,30 @@ module comvardef
         !
         comptime=comptime+tfinish-tstart
       endif
+      !
+      if (performval2) then
+        call cpu_time(tstart1)
+        !
+        write(94, *) nstep, "rho", rho(-hm:-hm+1,20,km+hm)
+        write(94, *) nstep, "vel", vel(hm:km+hm-4,0,10,2)
+        write(94, *) nstep, "prs", prs(-hm+1:-hm+2,10,20)
+        write(94, *) nstep, "tmp", tmp(hm+1:km+hm-3,-hm:-hm+1,3)
+        write(94, *) nstep, "q", q(-hm+2:-hm+3,10,40,:)
+        write(94, *) nstep, "rho", rho(20,-hm:-hm+1,km+hm)
+        write(94, *) nstep, "vel", vel(10,hm:km+hm-4,0,2)
+        write(94, *) nstep, "prs", prs(30,-hm+1:-hm+2,20)
+        write(94, *) nstep, "tmp", tmp(10,hm+1:km+hm-3,-hm:-hm+1)
+        write(94, *) nstep, "q", q(20,-hm+2:-hm+3,25,:)
+        write(94, *) nstep, "rho", rho(30,km+hm,-hm:-hm+1)
+        write(94, *) nstep, "vel", vel(20,10,hm:km+hm-4,2)
+        write(94, *) nstep, "prs", prs(30,20,-hm+1:-hm+2)
+        write(94, *) nstep, "tmp", tmp(10,30,hm+1:km+hm-3)
+        write(94, *) nstep, "q", q(20,20,-hm+2:-hm+3,:)
+        !
+        call cpu_time(tfinish1)
+        ctime(13)=ctime(13)+tfinish1-tstart1
+      end if
+      !
       !
     end subroutine bchomo
     !
@@ -583,7 +592,7 @@ module comvardef
     !
     subroutine gradcal(comptime)
       !
-      use comvardef,only: im,jm,km,hm,vel,dvel,tmp,dtmp,dx,dy,dz,ctime,nstep
+      use comvardef,only: im,jm,km,hm,vel,dvel,tmp,dtmp,dx,dy,dz,ctime,nstep,performval2
       use numerics, only: diff6ec
       !
       integer :: i,j,k,n
@@ -698,18 +707,20 @@ module comvardef
         comptime=comptime+tfinish-tstart
       endif
       !
-      call cpu_time(tstart1)
-      !
-      write(99, *) nstep, "dvel", "(i)", dvel(10:11,2,2,1,1), dvel(im-11:im-10,2,2,1,1)
-      write(99, *) nstep, "dtmp", "(i)", dtmp(10:11,2,2,1), dtmp(im-11:im-10,2,2,1)
-      write(99, *) nstep, "dvel", "(j)", dvel(30:31,5,7,2,2), dvel(im-31:im-30,5,7,2,2)
-      write(99, *) nstep, "dtmp", "(j)", dtmp(30:31,5,7,2), dtmp(im-31:im-30,5,7,2)
-      write(99, *) nstep, "dvel", "(k)", dvel(50:51,20,10,3,3), dvel(im-51:im-50,20,10,3,3)
-      write(99, *) nstep, "dtmp", "(k)", dtmp(50:51,20,10,3), dtmp(im-51:im-50,20,10,3)
-      !
-      call cpu_time(tfinish1)
-      !
-      ctime(13)=ctime(13)+tfinish1-tstart1
+      if (performval2) then
+        call cpu_time(tstart1)
+        !
+        write(99, *) nstep, "dvel", "(i)", dvel(10:11,2,2,1,1), dvel(im-11:im-10,2,2,1,1)
+        write(99, *) nstep, "dtmp", "(i)", dtmp(10:11,2,2,1), dtmp(im-11:im-10,2,2,1)
+        write(99, *) nstep, "dvel", "(j)", dvel(30:31,5,7,2,2), dvel(im-31:im-30,5,7,2,2)
+        write(99, *) nstep, "dtmp", "(j)", dtmp(30:31,5,7,2), dtmp(im-31:im-30,5,7,2)
+        write(99, *) nstep, "dvel", "(k)", dvel(50:51,20,10,3,3), dvel(im-51:im-50,20,10,3,3)
+        write(99, *) nstep, "dtmp", "(k)", dtmp(50:51,20,10,3), dtmp(im-51:im-50,20,10,3)
+        !
+        call cpu_time(tfinish1)
+        !
+        ctime(13)=ctime(13)+tfinish1-tstart1
+      end if
       
       !call progress_bar(3,3,'  ** temperature and velocity gradient ',10)
       !
@@ -717,7 +728,7 @@ module comvardef
     !
     subroutine convection(comptime)
       !
-      use comvardef, only: im,jm,km,hm,numq,rho,prs,tmp,vel,q,qrhs,dx,dy,dz,ctime,nstep
+      use comvardef, only: im,jm,km,hm,numq,rho,prs,tmp,vel,q,qrhs,dx,dy,dz,ctime,nstep,performval2
       use dataoper,  only: var2q
       use numerics,  only: diff6ec
       !
@@ -853,27 +864,29 @@ module comvardef
         comptime=comptime+tfinish-tstart
       endif
       !
-      call cpu_time(tstart1)
-      !
-      write(98, *) nstep, "qrhs", "(i)", qrhs(10:11,2,2,1), qrhs(im-11:im-10,2,2,1)
-      write(98, *) nstep, "qrhs", "(i)", qrhs(10:11,2,2,2), qrhs(im-11:im-10,2,2,2)
-      write(98, *) nstep, "qrhs", "(i)", qrhs(10:11,2,2,3), qrhs(im-11:im-10,2,2,3)
-      write(98, *) nstep, "qrhs", "(i)", qrhs(10:11,2,2,4), qrhs(im-11:im-10,2,2,4)
-      write(98, *) nstep, "qrhs", "(i)", qrhs(10:11,2,2,5), qrhs(im-11:im-10,2,2,5)
-      write(98, *) nstep, "qrhs", "(j)", qrhs(20,40:41,30,1), qrhs(20,im-41:im-40,30,1)
-      write(98, *) nstep, "qrhs", "(j)", qrhs(20,40:41,30,2), qrhs(20,im-41:im-40,30,2)
-      write(98, *) nstep, "qrhs", "(j)", qrhs(20,40:41,30,3), qrhs(20,im-41:im-40,30,3)
-      write(98, *) nstep, "qrhs", "(j)", qrhs(20,40:41,30,4), qrhs(20,im-41:im-40,30,4)
-      write(98, *) nstep, "qrhs", "(j)", qrhs(20,40:41,30,5), qrhs(20,im-41:im-40,30,5) 
-      write(98, *) nstep, "qrhs", "(k)", qrhs(24,14,28:29,1), qrhs(24,14,im-29:im-28,1)
-      write(98, *) nstep, "qrhs", "(k)", qrhs(24,14,28:29,2), qrhs(24,14,im-29:im-28,2)
-      write(98, *) nstep, "qrhs", "(k)", qrhs(24,14,28:29,3), qrhs(24,14,im-29:im-28,3)
-      write(98, *) nstep, "qrhs", "(k)", qrhs(24,14,28:29,4), qrhs(24,14,im-29:im-28,4)
-      write(98, *) nstep, "qrhs", "(k)", qrhs(24,14,28:29,5), qrhs(24,14,im-29:im-28,5)
-      ! 
-      call cpu_time(tfinish1)
-      !
-      ctime(13)=ctime(13)+tfinish1-tstart1
+      if (performval2) then
+        call cpu_time(tstart1)
+        !
+        write(98, *) nstep, "qrhs", "(i)", qrhs(10:11,2,2,1), qrhs(im-11:im-10,2,2,1)
+        write(98, *) nstep, "qrhs", "(i)", qrhs(10:11,2,2,2), qrhs(im-11:im-10,2,2,2)
+        write(98, *) nstep, "qrhs", "(i)", qrhs(10:11,2,2,3), qrhs(im-11:im-10,2,2,3)
+        write(98, *) nstep, "qrhs", "(i)", qrhs(10:11,2,2,4), qrhs(im-11:im-10,2,2,4)
+        write(98, *) nstep, "qrhs", "(i)", qrhs(10:11,2,2,5), qrhs(im-11:im-10,2,2,5)
+        write(98, *) nstep, "qrhs", "(j)", qrhs(20,40:41,30,1), qrhs(20,im-41:im-40,30,1)
+        write(98, *) nstep, "qrhs", "(j)", qrhs(20,40:41,30,2), qrhs(20,im-41:im-40,30,2)
+        write(98, *) nstep, "qrhs", "(j)", qrhs(20,40:41,30,3), qrhs(20,im-41:im-40,30,3)
+        write(98, *) nstep, "qrhs", "(j)", qrhs(20,40:41,30,4), qrhs(20,im-41:im-40,30,4)
+        write(98, *) nstep, "qrhs", "(j)", qrhs(20,40:41,30,5), qrhs(20,im-41:im-40,30,5) 
+        write(98, *) nstep, "qrhs", "(k)", qrhs(24,14,28:29,1), qrhs(24,14,im-29:im-28,1)
+        write(98, *) nstep, "qrhs", "(k)", qrhs(24,14,28:29,2), qrhs(24,14,im-29:im-28,2)
+        write(98, *) nstep, "qrhs", "(k)", qrhs(24,14,28:29,3), qrhs(24,14,im-29:im-28,3)
+        write(98, *) nstep, "qrhs", "(k)", qrhs(24,14,28:29,4), qrhs(24,14,im-29:im-28,4)
+        write(98, *) nstep, "qrhs", "(k)", qrhs(24,14,28:29,5), qrhs(24,14,im-29:im-28,5)
+        ! 
+        call cpu_time(tfinish1)
+        !
+        ctime(13)=ctime(13)+tfinish1-tstart1
+      end if
       ! 
       !call progress_bar(3,3,'  ** convection terms ',10)
       !
@@ -883,7 +896,7 @@ module comvardef
       !
       use comvardef, only: num1d3,reynolds,prandtl,const5,dx,dy,dz
       use comvardef, only: nstep
-      use comvardef, only: im,jm,km,hm,vel,dvel,dtmp,qrhs,tmp,ctime
+      use comvardef, only: im,jm,km,hm,vel,dvel,dtmp,qrhs,tmp,ctime,performval2
       use dataoper,  only: miucal
       use numerics,  only: diff6ec
       !
@@ -1062,37 +1075,39 @@ module comvardef
         comptime=comptime+tfinish-tstart
       endif
       !
-      call cpu_time(tstart1)
-      !
-      write(97, *) nstep, "sigma", "(1)", sigma(10:11,2,2,1), sigma(im-11:im-10,2,2,1)
-      write(97, *) nstep, "sigma", "(2)", sigma(10:11,2,2,2), sigma(im-11:im-10,2,2,2)
-      write(97, *) nstep, "sigma", "(3)", sigma(10,10:11,30,3), sigma(10,im-21:im-20,30,3)
-      write(97, *) nstep, "sigma", "(4)", sigma(10,10:11,30,4), sigma(10,im-21:im-20,30,4)
-      write(97, *) nstep, "sigma", "(5)", sigma(15,20,30,5), sigma(15,20,im-31:im-30,5)
-      write(97, *) nstep, "sigma", "(6)", sigma(15,20,30,6), sigma(15,20,im-31:im-30,6)
-      write(97, *) nstep, "qflux", "(1)", qflux(10:11,20,15,1), qflux(im-11:im-10,20,15,1)
-      write(97, *) nstep, "qflux", "(2)", qflux(30,40:41,25,2), qflux(30,im-41:im-40,25,2)
-      write(97, *) nstep, "qflux", "(3)", qflux(1,41,15:16,3), qflux(1,41,im-16:im-15,3)
-      !
-      write(97, *) nstep, "qrhs", "(i)", qrhs(3:4,14,8,1), qrhs(3,14,im-49:im-48,1)
-      write(97, *) nstep, "qrhs", "(i)", qrhs(13:14,24,18,2), qrhs(13,24,im-29:im-28,2)
-      write(97, *) nstep, "qrhs", "(i)", qrhs(23,34:35,28,3), qrhs(23,im-8:im-7,34,3)
-      write(97, *) nstep, "qrhs", "(i)", qrhs(33,44:45,38,4), qrhs(33,im-39:im-38,44,4)
-      write(97, *) nstep, "qrhs", "(i)", qrhs(43,54,48:49,5), qrhs(im-29:im-28,43,54,5)
-      write(97, *) nstep, "qrhs", "(j)", qrhs(43,54,48:49,1), qrhs(im-29:im-28,43,54,1)
-      write(97, *) nstep, "qrhs", "(j)", qrhs(33,44:45,38,2), qrhs(33,im-39:im-38,44,2)
-      write(97, *) nstep, "qrhs", "(j)", qrhs(23,34:35,28,3), qrhs(23,im-8:im-7,34,3)
-      write(97, *) nstep, "qrhs", "(j)", qrhs(13:14,24,18,4), qrhs(13,24,im-29:im-28,4)
-      write(97, *) nstep, "qrhs", "(j)", qrhs(3:4,14,8,5), qrhs(3,14,im-49:im-48,5)
-      write(97, *) nstep, "qrhs", "(k)", qrhs(23,34:35,28,1), qrhs(23,im-8:im-7,34,1)
-      write(97, *) nstep, "qrhs", "(k)", qrhs(13:14,24,18,2), qrhs(13,24,im-29:im-28,2)
-      write(97, *) nstep, "qrhs", "(k)", qrhs(3:4,14,8,3), qrhs(3,14,im-49:im-48,3)
-      write(97, *) nstep, "qrhs", "(k)", qrhs(43,54,48:49,4), qrhs(im-29:im-28,43,54,4)
-      write(97, *) nstep, "qrhs", "(k)", qrhs(33,44:45,38,5), qrhs(33,im-39:im-38,44,5)
-      !
-      call cpu_time(tfinish1)
-      !
-      ctime(13)=ctime(13)+tfinish1-tstart1
+      if (performval2) then
+        call cpu_time(tstart1)
+        !
+        write(97, *) nstep, "sigma", "(1)", sigma(10:11,2,2,1), sigma(im-11:im-10,2,2,1)
+        write(97, *) nstep, "sigma", "(2)", sigma(10:11,2,2,2), sigma(im-11:im-10,2,2,2)
+        write(97, *) nstep, "sigma", "(3)", sigma(10,10:11,30,3), sigma(10,im-21:im-20,30,3)
+        write(97, *) nstep, "sigma", "(4)", sigma(10,10:11,30,4), sigma(10,im-21:im-20,30,4)
+        write(97, *) nstep, "sigma", "(5)", sigma(15,20,30,5), sigma(15,20,im-31:im-30,5)
+        write(97, *) nstep, "sigma", "(6)", sigma(15,20,30,6), sigma(15,20,im-31:im-30,6)
+        write(97, *) nstep, "qflux", "(1)", qflux(10:11,20,15,1), qflux(im-11:im-10,20,15,1)
+        write(97, *) nstep, "qflux", "(2)", qflux(30,40:41,25,2), qflux(30,im-41:im-40,25,2)
+        write(97, *) nstep, "qflux", "(3)", qflux(1,41,15:16,3), qflux(1,41,im-16:im-15,3)
+        !
+        write(97, *) nstep, "qrhs", "(i)", qrhs(3:4,14,8,1), qrhs(3,14,im-49:im-48,1)
+        write(97, *) nstep, "qrhs", "(i)", qrhs(13:14,24,18,2), qrhs(13,24,im-29:im-28,2)
+        write(97, *) nstep, "qrhs", "(i)", qrhs(23,34:35,28,3), qrhs(23,im-8:im-7,34,3)
+        write(97, *) nstep, "qrhs", "(i)", qrhs(33,44:45,38,4), qrhs(33,im-39:im-38,44,4)
+        write(97, *) nstep, "qrhs", "(i)", qrhs(43,54,48:49,5), qrhs(im-29:im-28,43,54,5)
+        write(97, *) nstep, "qrhs", "(j)", qrhs(43,54,48:49,1), qrhs(im-29:im-28,43,54,1)
+        write(97, *) nstep, "qrhs", "(j)", qrhs(33,44:45,38,2), qrhs(33,im-39:im-38,44,2)
+        write(97, *) nstep, "qrhs", "(j)", qrhs(23,34:35,28,3), qrhs(23,im-8:im-7,34,3)
+        write(97, *) nstep, "qrhs", "(j)", qrhs(13:14,24,18,4), qrhs(13,24,im-29:im-28,4)
+        write(97, *) nstep, "qrhs", "(j)", qrhs(3:4,14,8,5), qrhs(3,14,im-49:im-48,5)
+        write(97, *) nstep, "qrhs", "(k)", qrhs(23,34:35,28,1), qrhs(23,im-8:im-7,34,1)
+        write(97, *) nstep, "qrhs", "(k)", qrhs(13:14,24,18,2), qrhs(13,24,im-29:im-28,2)
+        write(97, *) nstep, "qrhs", "(k)", qrhs(3:4,14,8,3), qrhs(3,14,im-49:im-48,3)
+        write(97, *) nstep, "qrhs", "(k)", qrhs(43,54,48:49,4), qrhs(im-29:im-28,43,54,4)
+        write(97, *) nstep, "qrhs", "(k)", qrhs(33,44:45,38,5), qrhs(33,im-39:im-38,44,5)
+        !
+        call cpu_time(tfinish1)
+        !
+        ctime(13)=ctime(13)+tfinish1-tstart1
+      end if
       !
       !call progress_bar(1,4,'  ** diffusion terms ',10)
       !
@@ -1100,7 +1115,7 @@ module comvardef
     !
     subroutine filterq(comptime)
       !
-      use comvardef, only: im,jm,km,hm,numq,q,nstep,ctime
+      use comvardef, only: im,jm,km,hm,numq,q,nstep,ctime,performval2
       use numerics,  only: filter10ec
       !
       real,intent(inout),optional :: comptime
@@ -1196,27 +1211,29 @@ module comvardef
         comptime=comptime+tfinish-tstart
       endif
       !
-      call cpu_time(tstart1)
-      !
-      write(96, *) nstep, "q", "(i)", q(10:11,2,2,1), q(im-11:im-10,2,2,1)
-      write(96, *) nstep, "q", "(i)", q(20,20:21,2,2), q(20, im-21:im-20,2,2)
-      write(96, *) nstep, "q", "(i)", q(20,30,35:36,3), q(20, 30, im-36:im-35,3)
-      write(96, *) nstep, "q", "(i)", q(10:11,2,2,4), q(im-11:im-10,2,2,4)
-      write(96, *) nstep, "q", "(i)", q(20,30,35:36,5), q(20, 30, im-36:im-35,5)
-      write(96, *) nstep, "q", "(j)", q(20,30,35:36,1), q(20, 30, im-36:im-35,1)
-      write(96, *) nstep, "q", "(j)", q(10:11,2,2,2), q(im-11:im-10,2,2,2)
-      write(96, *) nstep, "q", "(j)", q(10,20,35:36,3), q(10, 20, im-36:im-35,3)
-      write(96, *) nstep, "q", "(j)", q(20,20:21,2,4), q(20, im-21:im-20,2,4)
-      write(96, *) nstep, "q", "(j)", q(10:11,2,2,5), q(im-11:im-10,2,2,5)
-      write(96, *) nstep, "q", "(k)", q(11:12,2,10,1), q(im-12:im-11,2,10,1)
-      write(96, *) nstep, "q", "(k)", q(10,1,35:36,2), q(10, 1, im-36:im-35,2)
-      write(96, *) nstep, "q", "(k)", q(1,30,30:31,3), q(1, 30, im-31:im-30,3)
-      write(96, *) nstep, "q", "(k)", q(10:11,10,10,4), q(im-11:im-10,10,10,4)
-      write(96, *) nstep, "q", "(k)", q(20,20:21,30,5), q(20, im-21:im-20,30,5)
-      !
-      call cpu_time(tfinish1)
-      !
-      ctime(14)=ctime(14)+tfinish1-tstart1
+      if (performval2) then
+        call cpu_time(tstart1)
+        !
+        write(96, *) nstep, "q", "(i)", q(10:11,2,2,1), q(im-11:im-10,2,2,1)
+        write(96, *) nstep, "q", "(i)", q(20,20:21,2,2), q(20, im-21:im-20,2,2)
+        write(96, *) nstep, "q", "(i)", q(20,30,35:36,3), q(20, 30, im-36:im-35,3)
+        write(96, *) nstep, "q", "(i)", q(10:11,2,2,4), q(im-11:im-10,2,2,4)
+        write(96, *) nstep, "q", "(i)", q(20,30,35:36,5), q(20, 30, im-36:im-35,5)
+        write(96, *) nstep, "q", "(j)", q(20,30,35:36,1), q(20, 30, im-36:im-35,1)
+        write(96, *) nstep, "q", "(j)", q(10:11,2,2,2), q(im-11:im-10,2,2,2)
+        write(96, *) nstep, "q", "(j)", q(10,20,35:36,3), q(10, 20, im-36:im-35,3)
+        write(96, *) nstep, "q", "(j)", q(20,20:21,2,4), q(20, im-21:im-20,2,4)
+        write(96, *) nstep, "q", "(j)", q(10:11,2,2,5), q(im-11:im-10,2,2,5)
+        write(96, *) nstep, "q", "(k)", q(11:12,2,10,1), q(im-12:im-11,2,10,1)
+        write(96, *) nstep, "q", "(k)", q(10,1,35:36,2), q(10, 1, im-36:im-35,2)
+        write(96, *) nstep, "q", "(k)", q(1,30,30:31,3), q(1, 30, im-31:im-30,3)
+        write(96, *) nstep, "q", "(k)", q(10:11,10,10,4), q(im-11:im-10,10,10,4)
+        write(96, *) nstep, "q", "(k)", q(20,20:21,30,5), q(20, im-21:im-20,30,5)
+        !
+        call cpu_time(tfinish1)
+        !
+        ctime(14)=ctime(14)+tfinish1-tstart1
+      end if
       !
       !call progress_bar(3,3,'  ** spatial filter ',10)
       !
@@ -1284,81 +1301,24 @@ module comvardef
       endif
       ! 
       ! gradcal
-      ! write(99, *) nstep, "dvel", "(i)", dvel(:,:,:,:,:)
-      write(99, *) nstep, "dvel", "(i)", dvel(:,0,0,0,1)
-      write(99, *) nstep, "dvel", "(i)", dvel(im,0,:,0,2)
-      write(99, *) nstep, "dtmp", "(i)", dtmp(:,0,0,1)
-      write(99, *) nstep, "dtmp", "(i)", dtmp(im,:,0,1)
-      !
-      ! write(99, *) nstep, "dvel", "(i)", dvel(5:10,2,2,1,1), dvel(im-10:im-5,2,2,1,1)
-      ! write(99, *) nstep, "dtmp", "(i)", dtmp(5:10,2,2,1), dtmp(im-10:im-5,2,2,1)
-      ! write(99, *) nstep, "dvel", "(j)", dvel(30:35,5,7,2,2), dvel(im-35:im-30,5,7,2,2)
-      ! write(99, *) nstep, "dtmp", "(j)", dtmp(30:35,5,7,2), dtmp(im-35:im-30,5,7,2)
-      ! write(99, *) nstep, "dvel", "(k)", dvel(50:55,20,10,3,3), dvel(im-55:im-50,20,10,3,3)
-      ! write(99, *) nstep, "dtmp", "(k)", dtmp(50:55,20,10,3), dtmp(im-55:im-50,20,10,3)
-      ! gradcal
+      write(99, *) nstep, "dvel", "(1)", dvel(:,0,0,1,1)
+      write(99, *) nstep, "dvel", "(2)", dvel(im,0,:,2,2)
+      write(99, *) nstep, "dtmp", "(1)", dtmp(:,0,0,1)
+      write(99, *) nstep, "dtmp", "(2)", dtmp(im,:,0,2)
       ! 
       ! convection & diffusion
-      ! write(98, *) nstep, "qrhs", "(i)", qrhs(:,:,:,:)
       write(98, *) nstep, "qrhs", "(i)", qrhs(:,0,0,1)
       write(98, *) nstep, "qrhs", "(i)", qrhs(0,:,im,4)
       ! 
-      ! write(98, *) nstep, "qrhs", "(i)", qrhs(10:15,2,2,1), qrhs(im-15:im-10,2,2,1)
-      ! write(98, *) nstep, "qrhs", "(i)", qrhs(15:20,2,2,2), qrhs(im-20:im-15,2,2,2)
-      ! write(98, *) nstep, "qrhs", "(i)", qrhs(20:25,2,2,3), qrhs(im-25:im-20,2,2,3)
-      ! write(98, *) nstep, "qrhs", "(i)", qrhs(25:30,2,2,4), qrhs(im-30:im-25,2,2,4)
-      ! write(98, *) nstep, "qrhs", "(i)", qrhs(30:35,2,2,5), qrhs(im-35:im-30,2,2,5)
-      ! write(98, *) nstep, "qrhs", "(j)", qrhs(30,30:35,30,1), qrhs(20,im-35:im-30,30,1)
-      ! write(98, *) nstep, "qrhs", "(j)", qrhs(35,35:40,30,2), qrhs(35,im-40:im-35,30,2)
-      ! write(98, *) nstep, "qrhs", "(j)", qrhs(40,40:45,30,3), qrhs(40,im-45:im-40,30,3)
-      ! write(98, *) nstep, "qrhs", "(j)", qrhs(45,45:50,30,4), qrhs(45,im-50:im-45,30,4)
-      ! write(98, *) nstep, "qrhs", "(j)", qrhs(50,50:55,30,5), qrhs(50,im-55:im-50,30,5) 
-      ! write(98, *) nstep, "qrhs", "(k)", qrhs(20,20,20:25,1), qrhs(20,20,im-25:im-20,1)
-      ! write(98, *) nstep, "qrhs", "(k)", qrhs(25,14,25:30,2), qrhs(25,14,im-30:im-25,2)
-      ! write(98, *) nstep, "qrhs", "(k)", qrhs(30,14,30:35,3), qrhs(30,14,im-35:im-30,3)
-      ! write(98, *) nstep, "qrhs", "(k)", qrhs(35,14,35:40,4), qrhs(35,14,im-40:im-35,4)
-      ! write(98, *) nstep, "qrhs", "(k)", qrhs(40,14,40:45,5), qrhs(40,14,im-45:im-40,5)
-      ! convection & diffusion
-      ! 
       ! filterq
-      ! write(96, *) nstep, "q", "(i)", q(:,:,:,:)
       write(96, *) nstep, "q", "(i)", q(:,0,im,1)
-      write(96, *) nstep, "q", "(i)", q(im,:,km+hm,1)
+      write(96, *) nstep, "q", "(i)", q(im,:,km,1)
       ! 
-      ! write(96, *) nstep, "q", "(i)", q(10:15,2,2,1), q(im-15:im-10,2,2,1)
-      ! write(96, *) nstep, "q", "(i)", q(20,20:25,2,2), q(20, im-25:im-20,2,2)
-      ! write(96, *) nstep, "q", "(i)", q(20,30,35:40,3), q(20, 30, im-40:im-35,3)
-      ! write(96, *) nstep, "q", "(i)", q(10:15,2,2,4), q(im-15:im-10,2,2,4)
-      ! write(96, *) nstep, "q", "(i)", q(20,30,35:40,5), q(20, 30, im-40:im-35,5)
-      ! write(96, *) nstep, "q", "(j)", q(20,30,40:45,1), q(20, 30, im-45:im-30,1)
-      ! write(96, *) nstep, "q", "(j)", q(20:25,2,2,2), q(im-25:im-20,2,2,2)
-      ! write(96, *) nstep, "q", "(j)", q(10,20,35:40,3), q(10, 20, im-40:im-35,3)
-      ! write(96, *) nstep, "q", "(j)", q(20,20:25,2,4), q(20, im-25:im-20,2,4)
-      ! write(96, *) nstep, "q", "(j)", q(10:20,2,2,5), q(im-20:im-10,2,2,5)
-      ! write(96, *) nstep, "q", "(k)", q(30:35,2,10,1), q(im-35:im-30,2,10,1)
-      ! write(96, *) nstep, "q", "(k)", q(10,1,30:35,2), q(10, 1, im-35:im-30,2)
-      ! write(96, *) nstep, "q", "(k)", q(1,30,40:45,3), q(1, 30, im-40:im-45,3)
-      ! write(96, *) nstep, "q", "(k)", q(5:10,10,10,4), q(im-10:im-5,10,10,4)
-      ! write(96, *) nstep, "q", "(k)", q(20,30:35,30,5), q(20, im-35:im-30,30,5)
-      ! filterq
-      ! 
-      ! q2fvar
-      ! write(95, *) nstep, "rho", rho(:,:,:)
-      ! write(95, *) nstep, "vel", vel(:,:,:,:)
-      ! write(95, *) nstep, "prs", prs(:,:,:)
-      ! write(95, *) nstep, "tmp", tmp(:,:,:)
-      write(95, *) nstep, "rho", rho(-hm,:,km+hm)
-      write(95, *) nstep, "vel", vel(:,0,km+hm,2)
-      write(95, *) nstep, "prs", prs(0,:,-hm)
-      write(95, *) nstep, "tmp", tmp(-hm,-hm,:)
-      ! 
-      ! write(95, *) nstep, "rho", rho(5:6,10:11,10), rho(10,im-6:im-5,im-11:im-10)
-      ! write(95, *) nstep, "vel", vel(10:11,20:21,20, 1), vel(20,im-11:im-10,im-21:im-20, 1)
-      ! write(95, *) nstep, "vel", vel(15:16,25:26,30, 2), vel(30,im-16:im-15,im-26:im-25, 2)
-      ! write(95, *) nstep, "vel", vel(20:21,30:31,40, 3), vel(40,im-21:im-20,im-31:im-30, 3)
-      ! write(95, *) nstep, "prs", prs(10:11,20:21,30), rho(30,im-11:im-10,im-21:im-20)
-      ! write(95, *) nstep, "tmp", tmp(30:31,20:21,5), tmp(5,im-31:im-30,im-21:im-20)
-      ! q2fvar
+      ! q2fvar, bchomo
+      write(94, *) nstep, "rho", rho(:,:,km)
+      write(94, *) nstep, "vel", vel(im,0,:,2)
+      write(94, *) nstep, "prs", prs(:,:,km)
+      write(94, *) nstep, "tmp", tmp(:,jm,:)
       ! 
       if(present(comptime)) then
         call cpu_time(tfinish)
@@ -1369,7 +1329,7 @@ module comvardef
     !
     subroutine rk3(comptime)
       !
-      use comvardef, only: im,jm,km,numq,num1d3,num2d3,q,qrhs,deltat,performval, &
+      use comvardef, only: im,jm,km,numq,num1d3,num2d3,q,qrhs,deltat,performval1,performval2, &
                            rho,vel,tmp,prs,nstep,ctime, &
                            dvel, dtmp
       use dataoper,  only: q2fvar
@@ -1459,18 +1419,20 @@ module comvardef
         !
         ctime(9) = ctime(9) + tfinish1 - tstart1
         ! 
-        call cpu_time(tstart1)
-        ! 
-        write(95, *) nstep, "rho", rho(5:6,10:11,10), rho(10,im-6:im-5,im-11:im-10)
-        write(95, *) nstep, "vel", vel(10:11,20:21,20, 1), vel(20,im-11:im-10,im-21:im-20, 1)
-        write(95, *) nstep, "vel", vel(15:16,25:26,30, 2), vel(30,im-16:im-15,im-26:im-25, 2)
-        write(95, *) nstep, "vel", vel(20:21,30:31,40, 3), vel(40,im-21:im-20,im-31:im-30, 3)
-        write(95, *) nstep, "prs", prs(10:11,20:21,30), rho(30,im-11:im-10,im-21:im-20)
-        write(95, *) nstep, "tmp", tmp(30:31,20:21,5), tmp(5,im-31:im-30,im-21:im-20)
-        !
-        call cpu_time(tfinish1)
-        !
-        ctime(14)=ctime(14)+tfinish1-tstart1
+        if (performval2) then
+          call cpu_time(tstart1)
+          ! 
+          write(95, *) nstep, "rho", rho(5:6,10:11,10), rho(10,im-6:im-5,im-11:im-10)
+          write(95, *) nstep, "vel", vel(10:11,20:21,20, 1), vel(20,im-11:im-10,im-21:im-20, 1)
+          write(95, *) nstep, "vel", vel(15:16,25:26,30, 2), vel(30,im-16:im-15,im-26:im-25, 2)
+          write(95, *) nstep, "vel", vel(20:21,30:31,40, 3), vel(40,im-21:im-20,im-31:im-30, 3)
+          write(95, *) nstep, "prs", prs(10:11,20:21,30), rho(30,im-11:im-10,im-21:im-20)
+          write(95, *) nstep, "tmp", tmp(30:31,20:21,5), tmp(5,im-31:im-30,im-21:im-20)
+          !
+          call cpu_time(tfinish1)
+          !
+          ctime(14)=ctime(14)+tfinish1-tstart1
+        end if
         !
       enddo
       !
@@ -1480,19 +1442,21 @@ module comvardef
         comptime=comptime+tfinish-tstart
       endif
       !
-      ctime(15) = ctime(13) + ctime(14)
+      if (performval2) then
+        ctime(18) = ctime(13) + ctime(14)
+      end if
       !
-      ! if (performval) then
-      !   if(mod(nstep,10)==0) call validation(ctime(18))
-      ! end if
+      if (performval1) then
+        if(mod(nstep,10)==0) call validation(ctime(18))
+      end if
       !
     end subroutine rk3
     !
     subroutine mainloop
       !
-      use comvardef, only: time,nstep,deltat,ctime,performval
+      use comvardef, only: time,nstep,deltat,ctime,performval1,performval2
       !
-      if (performval) then
+      if(performval1 .or. performval2) then
         open(99, file = "gradcal_cpu.txt")
         open(98, file = "convection_cpu.txt")
         open(97, file = "diffusion_cpu.txt")
@@ -1508,11 +1472,13 @@ module comvardef
         nstep=nstep+1
         time =time + deltat
         !
-        print*,nstep,time
+        if(performval1 .and. mod(nstep,10)==0) then
+          print*,nstep,time
+        end if
         !
       enddo
       !
-      if (performval) then
+      if(performval1 .or. performval2) then
         close(99)
         close(98)
         close(97)
@@ -1538,7 +1504,7 @@ module comvardef
       open(14,file='time_report_cpu.txt')
       write(14,'(A)')'-----------cpu time cost---------'
       write(14,'(A)')'---------------------------------'
-      write(14,'(A,F13.3,A)')'     total time |',ctime(1)-ctime(18),' s '
+      write(14,'(A,F13.3,A)')'     total time |',ctime(1),' s '
       write(14,'(A,F13.3,A)')'            rk3 |',ctime(2),' s '
       write(14,'(A,F13.3,A)')'                                 '
       write(14,'(A,F13.3,A)')'    write (rk3) |',ctime(18),' s '
@@ -1555,25 +1521,6 @@ module comvardef
       close(14)
       print*,' << time_report_cpu.txt'
       !
-      open(15,file='tr_cpu.txt')
-      write(15,'(A)')'0'
-      write(15,'(A)')'0'
-      write(15,'(F13.3)'),ctime(1)-ctime(18)
-      write(15,'(F13.3)'),ctime(2)
-      write(15,'(A)'),'0'
-      write(15,'(F13.3)'),ctime(18)
-      write(15,'(F13.3)'),ctime(12)
-      write(15,'(F13.3)'),ctime(10)
-      write(15,'(F13.3)'),ctime(7)
-      write(15,'(F13.3)'),ctime(3)
-      write(15,'(F13.3)'),ctime(4)
-      write(15,'(F13.3)'),ctime(5)
-      write(15,'(F13.3)'),ctime(6)
-      write(15,'(F13.3)'),ctime(8)
-      write(15,'(F13.3)'),ctime(9)
-      write(15,'(A)'),'0'
-      close(15)
-      !
     end subroutine timereport
     !
   end module readwrite
@@ -1589,7 +1536,10 @@ module comvardef
       !
       real :: tstart,tfinish
       !
+      print*,' ** job has started **'
+      !
       call cpu_time(tstart)
+      !
       !
       call alloarray
       !
@@ -1603,6 +1553,6 @@ module comvardef
       !
       call timereport
       !
-      print*,' ** the job is done **'
+      print*,' ** job has been completed **'
       !
   end program boxsolver

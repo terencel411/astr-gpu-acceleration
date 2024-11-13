@@ -30,7 +30,8 @@ Compile and execute the gpu accelerated code
 cmake gpu
 
 ## Acceleration Comparison
-To make the compare the acceleration obtained
+To cthe view the acceleration obtained
+
 cmake compare
 
 A text file 'time_report.txt' will be generated with the accelerations details.
