@@ -7,14 +7,14 @@ EXEC2 = tgv_gpu
 EXEC3 = time_stats
 
 # Flags
-FLAGS = -O3
+FLAGS = -O1
 
-SRC1 = tgvsolver_cpu_v3.f90
-SRC2 = tgvsolver_gpu_v3.cuf
+SRC1 = tgvsolver_cpu_v2.f90
+SRC2 = tgvsolver_gpu_v2.cuf
 SRC3 = compstats.f90
 
 # all: $(EXEC1) $(EXEC2) $(EXEC3)
-runs cpu & gpu, then compares
+# runs cpu & gpu, then compares
 all: cpu gpu compare
 
 # Compile
@@ -26,11 +26,11 @@ all: cpu gpu compare
 # 	$(FC) $^ -o $@
 
 cpu: $(SRC1)
-	$(FC) -O3 $^ -o $(EXEC1)
+	$(FC) $(FLAGS) $^ -o $(EXEC1)
 	./$(EXEC1)
 
 gpu: $(SRC2)
-	$(FC) -O3 $^ -o $(EXEC2)
+	$(FC) $(FLAGS) $^ -o $(EXEC2)
 	./$(EXEC2)
 
 compare: $(SRC3)
