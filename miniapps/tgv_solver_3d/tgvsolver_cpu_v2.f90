@@ -2,7 +2,8 @@ module comvardef
     !
     implicit none
     !
-    integer :: im=128,jm=128,km=128,hm=5,numq=5
+    integer :: im=256,jm=256,km=256,hm=5,numq=5
+    ! integer :: im=128,jm=128,km=128,hm=5,numq=5
     ! integer :: im=64,jm=64,km=64,hm=5,numq=5
     ! integer :: im=16,jm=16,km=16,hm=5,numq=5
   
@@ -21,8 +22,8 @@ module comvardef
                          num19d18=19.d0/18.d0, num5d9  =5.d0/9.d0,       &
                          num9d36 =9.d0/36.d0
     !
-    logical, parameter :: performval1 = .true.
-    ! logical, parameter :: performval1 = .false.
+    ! logical, parameter :: performval1 = .true.
+    logical, parameter :: performval1 = .false.
     ! logical, parameter :: performval2 = .true.
     logical, parameter :: performval2 = .false.
     !

@@ -2,7 +2,8 @@ module comvardef
   !
   implicit none
   !
-  integer :: im=64,jm=64,km=64,hm=5,numq=5
+  integer :: im=128,jm=128,km=128,hm=5,numq=5
+  ! integer :: im=64,jm=64,km=64,hm=5,numq=5
 
   real(8),parameter :: pi=4.d0*atan(1.0_8),                            &
                        num1d35 =1.d0/35.d0,  num1d3  =1.d0/3.d0,       &
@@ -28,11 +29,12 @@ module comvardef
   !
   real :: ctime(12)
   !
+  logical, parameter :: performval1 = .true.
+  ! logical, parameter :: performval1 = .false.
+  !
   real(8),allocatable,dimension(:,:,:) :: rho,prs,tmp
   real(8),allocatable,dimension(:,:,:,:) :: x,q,qrhs,qsave,vel,dtmp,sigma,qflux
   real(8),allocatable,dimension(:,:,:,:,:) :: dvel
-  !
-  !$acc declare create(const1, const2, const6, ref_t, numq, num1d60)
   !
   contains
   !
@@ -51,7 +53,7 @@ module comvardef
     allocate( sigma(-hm:im+hm,-hm:jm+hm,-hm:km+hm,1:6),              &
               qflux(-hm:im+hm,-hm:jm+hm,-hm:km+hm,1:3) )
     !
-    print*,' ** common array allocated'
+    ! print*,' ** common array allocated'
     !
   end subroutine alloarray
   !
@@ -283,7 +285,7 @@ module dataoper
     !
     ctime=0.0
     !
-    print*,' ** data initilised'
+    ! print*,' ** data initilised'
     !
   end subroutine tgvinit
   !
@@ -315,20 +317,24 @@ module numerics
     !
   end subroutine diff6ec
   !
-  subroutine diff6ec_vec(vin, dim, n, vout)
-    integer, intent(in) :: dim, n
-    real(8), intent(in) :: vin(-n:dim+n)
+  subroutine diff6ec_vec(vin,dim,n,vout)
+    !$acc routine vector
+    !
+    integer,intent(in) :: dim,n
+    real(8),intent(in) :: vin(-n:dim+n)
     real(8) :: vout(0:dim)
+    !
+    ! local data
     integer :: i
-  
-    !$acc parallel loop vector
-    do i = 0, dim
-      vout(i) = 0.75d0 * (vin(i+1) - vin(i-1)) - &
-                0.15d0 * (vin(i+2) - vin(i-2)) + &
-                num1d60 * (vin(i+3) - vin(i-3))
-    end do
+    !
+    !$acc loop vector
+    do i=0,dim
+      vout(i)  =0.75d0 *(vin(i+1)-vin(i-1))- &
+                0.15d0 *(vin(i+2)-vin(i-2))+ &
+               num1d60 *(vin(i+3)-vin(i-3))
+    enddo
+    !
   end subroutine diff6ec_vec
-  
   !
   subroutine filter10ec(vin,dim,n,vout)
     !
@@ -1187,10 +1193,48 @@ module solver
     !
   end subroutine stacal
   !
+  subroutine validation(comptime)
+    use comvardef, only: im,jm,km,hm,nstep, &
+                         dvel, dtmp, qrhs, q, rho, vel, prs, tmp
+    ! 
+    real,intent(inout),optional :: comptime
+    real :: tstart,tfinish
+    ! 
+    if(present(comptime)) then
+      call cpu_time(tstart)
+    endif
+    ! 
+    ! gradcal
+    write(99, *) nstep, "dvel", "(1)", dvel(:,0,0,1,1)
+    write(99, *) nstep, "dvel", "(2)", dvel(im,0,:,2,2)
+    write(99, *) nstep, "dtmp", "(1)", dtmp(:,0,0,1)
+    write(99, *) nstep, "dtmp", "(2)", dtmp(im,:,0,2)
+    ! 
+    ! convection & diffusion
+    write(98, *) nstep, "qrhs", "(i)", qrhs(:,0,0,1)
+    write(98, *) nstep, "qrhs", "(i)", qrhs(0,:,im,4)
+    ! 
+    ! filterq
+    write(96, *) nstep, "q", "(i)", q(:,0,im,1)
+    write(96, *) nstep, "q", "(i)", q(im,:,km,1)
+    ! 
+    ! q2fvar, bchomo
+    write(94, *) nstep, "rho", rho(:,:,km)
+    write(94, *) nstep, "vel", vel(im,0,:,2)
+    write(94, *) nstep, "prs", prs(:,:,km)
+    write(94, *) nstep, "tmp", tmp(:,jm,:)
+    ! 
+    if(present(comptime)) then
+      call cpu_time(tfinish)
+      !
+      comptime=comptime+tfinish-tstart
+    endif
+  end subroutine validation
+  !
   subroutine rk3(comptime)
     !
     use comvardef, only: im,jm,km,numq,num1d3,num2d3,q,qrhs,deltat,    &
-                         rho,vel,tmp,prs,qsave,nstep,ctime
+                         rho,vel,tmp,prs,qsave,nstep,ctime,performval1
     use dataoper,  only: q2fvar
     !
     real,intent(inout),optional :: comptime
@@ -1297,14 +1341,27 @@ module solver
       comptime=comptime+tfinish-tstart
     endif
     !
+    if (performval1) then
+      if(mod(nstep,10)==0) call validation()
+    end if
+    !
   end subroutine rk3
   !
   subroutine mainloop
     !
-    use comvardef, only: time,nstep,deltat,ctime
+    use comvardef, only: time,nstep,deltat,ctime,performval1
     use comvardef, only: qrhs,q,qsave,rho,vel,tmp,prs,dvel,dtmp,sigma,qflux
     !
     !$acc data copy(qrhs,q,qsave,rho,vel,tmp,prs,dvel,dtmp,sigma,qflux )
+    !
+    if(performval1) then
+      open(99, file = "gradcal_oa.txt")
+      open(98, file = "convection_oa.txt")
+      open(97, file = "diffusion_oa.txt")
+      open(96, file = "filterq_oa.txt")
+      open(95, file = "q2fvar_oa.txt")
+      open(94, file = "bchomo_oa.txt")
+    end if
     !
     do while(nstep<101)
       !
@@ -1313,11 +1370,22 @@ module solver
       nstep=nstep+1
       time =time + deltat
       !
-      if (mod(nstep,10)==0) print*,nstep,time
+      ! if(performval1 .and. mod(nstep,10)==0) then
+      !   print*,nstep,time
+      ! end if
       !
     enddo
     !
     !$acc end data
+    !
+    if(performval1) then
+      close(99)
+      close(98)
+      close(97)
+      close(96)
+      close(95)
+      close(94)
+    end if
     !
     !
   end subroutine mainloop
@@ -1386,6 +1454,8 @@ program boxsolver
     !
     real :: tstart,tfinish
     !
+    print*,' ** job has started **'
+    !
     call cpu_time(tstart)
     !
     call alloarray
@@ -1400,6 +1470,6 @@ program boxsolver
     !
     call timereport
     !
-    print*,' ** the job is done **'
+    print*,' ** job has been completed **'
     !
 end program boxsolver
