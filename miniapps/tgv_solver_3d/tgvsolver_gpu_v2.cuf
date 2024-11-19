@@ -4,6 +4,8 @@ module comvardef
   ! 
   implicit none
   !
+  ! integer :: im=384,jm=384,km=384,hm=5,numq=5
+  ! integer :: im=256,jm=256,km=256,hm=5,numq=5
   integer :: im=128,jm=128,km=128,hm=5,numq=5
   ! integer :: im=64,jm=64,km=64,hm=5,numq=5
   ! integer :: im=16,jm=16,km=16,hm=5,numq=5
@@ -23,8 +25,8 @@ module comvardef
                        num19d18=19.d0/18.d0, num5d9  =5.d0/9.d0,       &
                        num9d36 =9.d0/36.d0
   !
-  logical, parameter :: performval1 = .true.
-  ! logical, parameter :: performval1 = .false.
+  ! logical, parameter :: performval1 = .true.
+  logical, parameter :: performval1 = .false.
   ! logical, parameter :: performval2 = .true.
   logical, parameter :: performval2 = .false.
   !
@@ -44,6 +46,8 @@ module comvardef
   !
   ! ---- device variables ----
   ! 
+  ! integer, device :: im_dev=512,jm_dev=512,km_dev=512,hm_dev=5,numq_dev=5
+  ! integer, device :: im_dev=256,jm_dev=256,km_dev=256,hm_dev=5,numq_dev=5
   integer, device :: im_dev=128,jm_dev=128,km_dev=128,hm_dev=5,numq_dev=5
   ! integer, device :: im_dev=64,jm_dev=64,km_dev=64,hm_dev=5,numq_dev=5
   ! integer, device :: im_dev=16,jm_dev=16,km_dev=16,hm_dev=5,numq_dev=5
@@ -351,7 +355,7 @@ module dataoper
   !
   subroutine tgvinit
     !
-    use comvardef, only: im,jm,km,pi,gamma,mach,reynolds,prandtl,dx,dy,dz, &
+    use comvardef, only: im,jm,km,pi,gamma,mach,reynolds,prandtl,dx,dy,dz,ctime, &
                          const1,const2,const3,const4,const5,const6,    &
                          const7,time,nstep,deltat,ref_t,               &
                          x,qrhs,q,vel,rho,prs,tmp,ctime, &
@@ -363,6 +367,7 @@ module dataoper
     !
     integer :: i,j,k
     real(8) :: var1,pinf
+    real :: tstart,tfinish
     !
     ref_t=273.15d0
     gamma=1.4d0
@@ -419,6 +424,8 @@ module dataoper
     !
     ! ---- device variables ----
     !
+    call cpu_time(tstart)
+    !
     deltat_dev=deltat
     !
     const1_dev = const1
@@ -438,6 +445,10 @@ module dataoper
     dx_dev = dx
     dy_dev = dy
     dz_dev = dz
+    !
+    call cpu_time(tfinish)
+    !
+    ctime(13) = tfinish - tstart
     !
     ! ---- device variables ----
     !
@@ -2348,7 +2359,7 @@ module readwrite
     write(14,'(A)')'-----------gpu time cost---------'
     write(14,'(A)')'---------------------------------'
     write(14,'(A,F13.3,A)')'     total time |',ctime(1),' s '
-    write(14,'(A,F13.3,A)')'            rk3 |',ctime(2),' s '
+    write(14,'(A,F13.3,A)')'   (solver) rk3 |',ctime(2),' s '
     write(14,'(A,F13.3,A)')'       (io) rk3 |',ctime(13),' s '
     write(14,'(A,F13.3,A)')'    (write) rk3 |',ctime(18),' s '
     write(14,'(A,F13.3,A)')' intermed steps |',ctime(12),' s '

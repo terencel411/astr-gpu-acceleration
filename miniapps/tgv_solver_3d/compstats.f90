@@ -12,8 +12,8 @@ program merge_files
 
     ln = 0
 
-    open(unit=10, file='time_report_cpu.txt', status='old', action='read')
-    open(unit=20, file='time_report_gpu.txt', status='old', action='read')
+    open(unit=10, file='time_report_cpu_256.txt', status='old', action='read')
+    open(unit=20, file='time_report_gpu_256.txt', status='old', action='read')
     open(unit=30, file='time_report.txt', status='replace', action='write')
 
     do
